@@ -47,4 +47,15 @@ class AuthController extends Controller
             ], 422);
         }
     }
+
+    public function logout()
+    {
+        $user = Auth::user();
+        // Revoke the token that was used to authenticate the current request...
+        $user->currentAccessToken()->delete();
+
+        return response([
+            'success' => 'Đăng xuất thành công!'
+        ]);
+    }
 }
