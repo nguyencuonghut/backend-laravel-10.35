@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
@@ -21,7 +22,12 @@ class AuthController extends Controller
             'email.exists' => 'Email không tồn tại trên hệ thống.',
             'password.required' => 'Bạn phải nhập mật khẩu.'
         ];
-        $request->validate($rules,$messages);
+        $validator = Validator::make($request->all(), $rules, $messages);
+        if ($validator->fails()) {
+            return response([
+                'error' => $validator->errors()
+            ], 404);
+        }
 
         if (Auth::attempt([
             'email' => $request->email,
@@ -46,6 +52,9 @@ class AuthController extends Controller
                 'error' => 'Email hoặc mật khẩu không đúng!'
             ], 422);
         }
+        return response([
+            'error' => 'qwertyhjkllkjhgfe!'
+        ], 422);
     }
 
     public function logout()

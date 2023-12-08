@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'nguyenvancuong@honghafeed.com.vn',
             'password' => bcrypt('Hongha@123'),
             'is_disabled' => false,
+            'is_admin' => true,
         ]);
     }
 }

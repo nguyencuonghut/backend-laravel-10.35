@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class UsersController extends Controller
 {
@@ -30,9 +32,36 @@ class UsersController extends Controller
      */
     public function store(Request $request)
     {
-        $user = User::create($request->all());
+        $rules = array(
+            'name'    => 'required',
+            'email'    => 'required|email|unique:users,email',
+            'password' => 'required|confirmed|min:6',
+            'password_confirmation' => 'required',
+        );
 
-        return new UserResource($user);
+        $messages = [
+            'name.required' => 'Bạn phải nhập tên.',
+            'email.required' => 'Bạn phải nhập địa chỉ email.',
+            'email.email' => 'Email sai định dạng.',
+            'email.unique' => 'Email đã tồn tại trên hệ thống.',
+            'password.required' => 'Bạn phải nhập mật khẩu.',
+            'password.min' => 'Mật khẩu dài tối thiểu 6 ký tự',
+            'password.confirmed' => 'Mật khẩu không khớp',
+            'password_confirmation.required' => 'Bạn cần xác nhận mật khẩu',
+        ];
+        $validator = Validator::make($request->all(), $rules, $messages);
+        if ($validator->fails()) {
+            return response([
+                'error' => $validator->errors()
+            ], 404);
+        }
+
+        $user = User::create($request->all());
+        if (Auth::user()->isAdmin()) {
+            return new UserResource($user);
+        }
+
+        return  response()->json(["error" => "Bạn không có quyền thêm người dùng!"], 403);
     }
 
     /**
@@ -56,10 +85,31 @@ class UsersController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $user = User::findOrFail($id);
-        $user->update($request->all());
+        $rules = array(
+            'name'    => 'required',
+            'email'    => 'required|email|unique:users,email,'.$id,
+        );
 
-        return new UserResource($user);
+        $messages = [
+            'name.required' => 'Bạn phải nhập tên.',
+            'email.required' => 'Bạn phải nhập địa chỉ email.',
+            'email.email' => 'Email sai định dạng.',
+            'email.unique' => 'Email đã tồn tại trên hệ thống.',
+        ];
+        $validator = Validator::make($request->all(), $rules, $messages);
+        if ($validator->fails()) {
+            return response([
+                'error' => $validator->errors()
+            ], 404);
+        }
+
+        $user = User::findOrFail($id);
+        if (Auth::user()->isAdmin()) {
+            $user->update($request->all());
+            return new UserResource($user);
+        }
+
+        return  response()->json(["error" => "Bạn không có quyền sửa người dùng!"], 403);
     }
 
     /**
@@ -68,8 +118,11 @@ class UsersController extends Controller
     public function destroy(string $id)
     {
         $user = User::findOrFail($id);
-        $user->delete();
+        if (Auth::user()->isAdmin()) {
+            $user->delete();
+            return response(null, 204);
+        }
 
-        return response(null, 204);
+        return  response()->json(["error" => "Bạn không có quyền xóa người dùng!"], 403);
     }
 }
