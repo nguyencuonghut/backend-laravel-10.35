@@ -51,7 +51,13 @@ class UsersController extends Controller
         $request->validate($rules, $messages);
 
         if ('Admin' == Auth::user()->role->name) {
-            $user = User::create($request->all());
+            $user = new User();
+            $user->name = $request->name;
+            $user->email = $request->email;
+            $user->password = bcrypt($request->password);
+            $user->role_id = $request->role_id ? $request->role_id : 2; //Default role as User
+            $user->status_id = $request->status_id ? $request->status_id : 1; //Default status as Open
+            $user->save();
             return new UserResource($user);
         }
 
