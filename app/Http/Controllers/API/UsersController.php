@@ -7,7 +7,6 @@ use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
 
 class UsersController extends Controller
 {
@@ -16,7 +15,7 @@ class UsersController extends Controller
      */
     public function index()
     {
-        return UserResource::collection(User::all());
+        return UserResource::collection(User::orderByDesc('id')->get());
     }
 
     /**
@@ -49,19 +48,16 @@ class UsersController extends Controller
             'password.confirmed' => 'Mật khẩu không khớp',
             'password_confirmation.required' => 'Bạn cần xác nhận mật khẩu',
         ];
-        $validator = Validator::make($request->all(), $rules, $messages);
-        if ($validator->fails()) {
-            return response([
-                'error' => $validator->errors()
-            ], 404);
-        }
+        $request->validate($rules, $messages);
 
-        $user = User::create($request->all());
-        if (Auth::user()->isAdmin()) {
+        if ('Admin' == Auth::user()->role->name) {
+            $user = User::create($request->all());
             return new UserResource($user);
         }
 
-        return  response()->json(["error" => "Bạn không có quyền thêm người dùng!"], 403);
+        return response([
+            'error' => 'Bạn không có quyền thêm người dùng!'
+        ], 403);
     }
 
     /**
@@ -96,15 +92,10 @@ class UsersController extends Controller
             'email.email' => 'Email sai định dạng.',
             'email.unique' => 'Email đã tồn tại trên hệ thống.',
         ];
-        $validator = Validator::make($request->all(), $rules, $messages);
-        if ($validator->fails()) {
-            return response([
-                'error' => $validator->errors()
-            ], 404);
-        }
+        $request->validate($rules, $messages);
 
         $user = User::findOrFail($id);
-        if (Auth::user()->isAdmin()) {
+        if ('Admin' == Auth::user()->role->name) {
             $user->update($request->all());
             return new UserResource($user);
         }
@@ -118,7 +109,7 @@ class UsersController extends Controller
     public function destroy(string $id)
     {
         $user = User::findOrFail($id);
-        if (Auth::user()->isAdmin()) {
+        if ('Admin' == Auth::user()->role->name) {
             $user->delete();
             return response(null, 204);
         }

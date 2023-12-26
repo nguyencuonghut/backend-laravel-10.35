@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
@@ -30,7 +29,7 @@ class AuthController extends Controller
             'password' => $request->password
             ], true)) {
             //Prevent disable User from logging
-            if (Auth::user()->is_disabled) {
+            if ('Khóa' == Auth::user()->status->name) {
                 Auth::logout();
                 return response([
                     'error' => 'Tài khoản đã bị khóa!'

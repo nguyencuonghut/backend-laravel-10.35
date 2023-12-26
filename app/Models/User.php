@@ -21,8 +21,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'is_disabled',
-        'is_admin',
+        'role_id',
+        'status_id',
     ];
 
     /**
@@ -45,8 +45,13 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    public function isAdmin(): bool
+    public function role()
     {
-      return $this->is_admin;
+        return $this->belongsTo(Role::class);
+    }
+
+    public function status()
+    {
+        return $this->belongsTo(Status::class);
     }
 }
