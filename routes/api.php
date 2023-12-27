@@ -20,6 +20,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('/users',UsersController::class);
 
     Route::get('/user', [UsersController::class, 'getAuthUser']);
+    Route::post('/change_password', [UsersController::class, 'changePassword']);
     Route::post('/logout', [AuthController::class, 'logout']);
 });
 

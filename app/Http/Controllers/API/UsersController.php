@@ -133,4 +133,28 @@ class UsersController extends Controller
         $user_id = Auth::user()->id;
         return new UserResource(User::findOrFail($user_id));
     }
+
+    /**
+     * Change user's password
+     */
+    public function changePassword(Request $request)
+    {
+        $rules = array(
+            'password' => 'required|confirmed|min:6',
+            'password_confirmation' => 'required',
+        );
+
+        $messages = [
+            'password.required' => 'Bạn phải nhập mật khẩu.',
+            'password.min' => 'Mật khẩu dài tối thiểu 6 ký tự',
+            'password.confirmed' => 'Mật khẩu không khớp',
+            'password_confirmation.required' => 'Bạn cần xác nhận mật khẩu',
+        ];
+        $request->validate($rules, $messages);
+
+        $user = User::findOrFail(Auth::user()->id);
+        $user->password = bcrypt($request->password);
+        $user->save();
+        return new UserResource($user);
+    }
 }
