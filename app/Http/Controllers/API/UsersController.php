@@ -36,6 +36,7 @@ class UsersController extends Controller
             'email'    => 'required|email|unique:users,email',
             'password' => 'required|confirmed|min:6',
             'password_confirmation' => 'required',
+            'role_id' => 'required',
         );
 
         $messages = [
@@ -47,6 +48,7 @@ class UsersController extends Controller
             'password.min' => 'Mật khẩu dài tối thiểu 6 ký tự',
             'password.confirmed' => 'Mật khẩu không khớp',
             'password_confirmation.required' => 'Bạn cần xác nhận mật khẩu',
+            'role_id.required' => 'Bạn cần chọn vai trò',
         ];
         $request->validate($rules, $messages);
 
@@ -55,7 +57,7 @@ class UsersController extends Controller
             $user->name = $request->name;
             $user->email = $request->email;
             $user->password = bcrypt($request->password);
-            $user->role_id = $request->role_id ? $request->role_id : 2; //Default role as User
+            $user->role_id = $request->role_id;
             $user->status_id = $request->status_id ? $request->status_id : 1; //Default status as Open
             $user->save();
             return new UserResource($user);
