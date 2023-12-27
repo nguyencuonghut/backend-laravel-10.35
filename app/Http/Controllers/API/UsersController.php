@@ -122,4 +122,13 @@ class UsersController extends Controller
 
         return  response()->json(["error" => "Bạn không có quyền xóa người dùng!"], 403);
     }
+
+    /**
+     * Display the specified resource.
+     */
+    public function getAuthUser()
+    {
+        $user_id = Auth::user()->id;
+        return new UserResource(User::findOrFail($user_id));
+    }
 }
