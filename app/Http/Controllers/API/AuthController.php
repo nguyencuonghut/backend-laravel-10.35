@@ -3,9 +3,15 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Notifications\UserForgotPassword;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Notification;
+
 
 class AuthController extends Controller
 {
@@ -58,5 +64,68 @@ class AuthController extends Controller
         return response([
             'success' => 'Đăng xuất thành công!'
         ]);
+    }
+
+    public function forgotPassword(Request $request)
+    {
+        $rules = array(
+            'email'    => 'required|email|exists:users', // make sure the email is an actual email
+        );
+
+        $messages = [
+            'email.required' => 'Bạn phải nhập địa chỉ email.',
+            'email.email' => 'Email sai định dạng.',
+            'email.exists' => 'Email không tồn tại trên hệ thống.',
+        ];
+        $request->validate($rules, $messages);
+
+        //Delete the old password reset request
+        DB::table('password_reset_tokens')->where(['email'=> $request->email])->delete();
+
+        $token = Str::random(64);
+        DB::table('password_reset_tokens')->insert([
+            'email' => $request->email,
+            'token' => $token,
+            'created_at' => Carbon::now()
+        ]);
+
+        Notification::route('mail' , $request->email)->notify(new UserForgotPassword($request->email, $token));
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $rules = array(
+            'email'    => 'required|email|exists:users', // make sure the email is an actual email
+            'password' => 'required|confirmed|min:6',
+            'password_confirmation' => 'required',
+        );
+
+        $messages = [
+            'email.required' => 'Bạn phải nhập địa chỉ email.',
+            'email.email' => 'Email sai định dạng.',
+            'email.exists' => 'Email không tồn tại trên hệ thống.',
+            'password.required' => 'Bạn phải nhập mật khẩu.',
+            'password.confirmed' => 'Mật khẩu không khớp.',
+            'password_confirmation.required' => 'Bạn chưa xác nhận mật khẩu.',
+        ];
+        $request->validate($rules, $messages);
+
+        $token = DB::table('password_reset_tokens')
+                            ->where([
+                            'email' => $request->email,
+                            'token' => $request->token
+                            ])
+                            ->first();
+        if (!$token){
+            return response([
+                'error' => 'Token không hợp lệ!'
+            ], 422);
+        }
+
+        User::where('email', $request->email)
+                    ->update(['password' => bcrypt($request->password)]);
+
+        //Delete the password reset request
+        DB::table('password_reset_tokens')->where(['email'=> $request->email])->delete();
     }
 }
