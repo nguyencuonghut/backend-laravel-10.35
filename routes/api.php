@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/users/bulk_destroy', [UsersController::class, 'bulkDestroy']);
     Route::apiResource('/users',UsersController::class);
 
     Route::get('/user', [UsersController::class, 'getAuthUser']);

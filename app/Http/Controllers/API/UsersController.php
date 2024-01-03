@@ -157,4 +157,22 @@ class UsersController extends Controller
         $user->save();
         return new UserResource($user);
     }
+
+    public function bulkDestroy(Request $request)
+    {
+        $rules = array(
+            'ids' => 'required',
+        );
+
+        $messages = [
+            'ids.required' => 'Bạn phải chọn người dùng để xóa.',
+        ];
+        $request->validate($rules, $messages);
+
+        if ('Admin' == Auth::user()->role->name) {
+            User::whereIn('id', $request->ids)->delete();
+        }
+
+        return  response()->json(["error" => "Bạn không có quyền xóa người dùng!"], 403);
+    }
 }
